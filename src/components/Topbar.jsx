@@ -1,60 +1,88 @@
-// src/components/Topbar.jsx
+import { useState } from 'react';
+import { ChevronDown, Database, LogIn, Moon, Search, UserRound } from 'lucide-react';
 import { useAstroStore } from '../store/useAstroStore';
+import { ProfileMenu } from './ProfileMenu';
 
-export const Topbar = ({ coordinates }) => {
+export const Topbar = ({
+  coordinates,
+  onSearch,
+  onOpenLogin,
+  onProfileAction,
+  onOpenDataStatus,
+}) => {
   const { isRedMode, toggleRedMode } = useAstroStore();
+  const [profileMenuVisible, setProfileMenuVisible] = useState(false);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const query = new FormData(event.currentTarget).get('location-search')?.toString().trim() ?? '';
+    onSearch(query);
+  };
+
+  const handleProfileSelect = (action) => {
+    setProfileMenuVisible(false);
+    onProfileAction(action);
+  };
 
   return (
-    <header className="w-full h-10 bg-neu-base flex items-center px-4 gap-4 border-b border-neu-border shadow-neu-sm font-mono">
-      
-      {/* Logo */}
-      <div className="flex items-center min-w-[190px]">
+    <header className="observatory-topbar">
+      <div className="topbar-brand">
         <img
           src="/logo-stellavista.png"
           alt="StellaVista"
-          className="h-9 w-auto max-w-[180px] object-contain"
+          className="topbar-logo"
           onError={(event) => {
             event.currentTarget.style.display = 'none';
           }}
         />
       </div>
 
-      <div className="w-px h-4 bg-neu-border" />
+      <form className="topbar-search" role="search" onSubmit={handleSearch}>
+        <Search aria-hidden="true" />
+        <input name="location-search" aria-label="Buscar lugar o coordenadas" placeholder="Buscar lugar o coordenadas…" />
+        <kbd>ENTER</kbd>
+      </form>
 
-      {/* Coordenadas */}
-      <span className="text-[10px] tracking-widest text-astro-dim">
-        LAT <span className="text-astro-text">{coordinates.lat.toFixed(4)}</span>
-        &nbsp;&nbsp;
-        LNG <span className="text-astro-text">{coordinates.lng.toFixed(4)}</span>
-      </span>
-
-      {/* Derecha */}
-      <div className="ml-auto flex items-center gap-3"></div>
-
-      {/* Botón modo nocturno */}
-      <button
-        onClick={toggleRedMode}
-        className={`
-          flex items-center gap-2 px-3 py-1 rounded-lg text-[9px]
-          tracking-[0.12em] uppercase border transition-all duration-300
-          ${isRedMode
-            ? 'bg-red-950/40 border-red-900/50 text-red-400 shadow-neu-sm'
-            : 'bg-neu-raised border-neu-border text-astro-dim shadow-neu-sm hover:text-astro-text'
-          }
-        `}
-      >
-          <span className={`w-1.5 h-1.5 rounded-full ${isRedMode ? 'bg-red-400 animate-pulse' : 'bg-astro-dim'}`} />
-          Modo nocturno
-        </button>
-
-      {/* Status — empujado a la derecha */}
-      <div className="ml-auto flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-astro-sky animate-pulse" />
-        <span className="text-[9px] tracking-[0.15em] uppercase text-astro-dim">
-          Datos en vivo
-        </span>
+      <div className="topbar-coordinates" aria-label="Coordenadas activas">
+        <span>LAT <b>{coordinates.lat.toFixed(4)}</b></span>
+        <span>LNG <b>{coordinates.lng.toFixed(4)}</b></span>
+        <span>EPSG <b>4326 / WGS84</b></span>
       </div>
 
+      <div className="topbar-actions">
+        <button className="data-status-button" type="button" onClick={onOpenDataStatus}>
+          <Database aria-hidden="true" />
+          <span>Fuentes</span>
+        </button>
+        <button
+          type="button"
+          onClick={toggleRedMode}
+          aria-pressed={isRedMode}
+          className={`night-mode-button ${isRedMode ? 'is-active' : ''}`}
+          title="Alternar visión nocturna"
+        >
+          <Moon aria-hidden="true" />
+          <span>Noche</span>
+        </button>
+        <button className="login-access-button" type="button" onClick={onOpenLogin}>
+          <LogIn aria-hidden="true" />
+          <span>Acceder</span>
+        </button>
+        <div className="profile-menu-anchor">
+          <button
+            className="profile-trigger"
+            type="button"
+            onClick={() => setProfileMenuVisible((visible) => !visible)}
+            aria-expanded={profileMenuVisible}
+            aria-haspopup="menu"
+          >
+            <span className="profile-avatar"><UserRound aria-hidden="true" /></span>
+            <span className="profile-trigger-copy"><strong>Observador</strong><small>Demo</small></span>
+            <ChevronDown aria-hidden="true" />
+          </button>
+          {profileMenuVisible && <ProfileMenu onSelect={handleProfileSelect} />}
+        </div>
+      </div>
     </header>
   );
 };

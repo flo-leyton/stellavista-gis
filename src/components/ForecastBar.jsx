@@ -26,13 +26,14 @@ export const ForecastBar = ({ forecast, dataActual }) => {
   if (!forecast?.length) return null;
 
   return (
-    <footer className="h-28 bg-neu-base border-t border-neu-border shrink-0 px-3 py-2">
-      <p className="text-[9px] tracking-[0.18em] uppercase text-astro-dim mb-2">
-        Pronóstico nocturno
-      </p>
+    <footer className="forecast-timeline">
+      <div className="forecast-label">
+        <span>Ventana de observación</span>
+        <strong>PRÓXIMAS 8 HORAS</strong>
+      </div>
 
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${forecast.length}, 1fr)` }}>
-        {forecast.map(({ hora, nubosidad, jetstream }, i) => {
+      <div className="forecast-slots" style={{ gridTemplateColumns: `repeat(${forecast.length}, minmax(180px, 1fr))` }}>
+        {forecast.map(({ hora, nubosidad, jetstream }) => {
           // Calculamos score por franja usando datos parciales
           const scoreFranja = calcularScore({
             nubosidad,
@@ -47,25 +48,14 @@ export const ForecastBar = ({ forecast, dataActual }) => {
           return (
             <div
               key={hora}
-              className={`
-                bg-neu-raised rounded-lg border ${border}
-                ${glow} shadow-neu-sm
-                flex flex-col items-center justify-between
-                p-1.5 transition-all duration-500
-              `}
+              className={`forecast-slot ${border} ${glow}`}
             >
-              {/* Hora */}
-              <p className="text-[8px] text-astro-dim tracking-widest tabular-nums">
-                {hora}
-              </p>
-
-              {/* Score */}
-              <p className={`text-base font-bold tabular-nums leading-none ${texto}`}>
-                {scoreFranja}
-              </p>
-
-              {/* Barra vertical */}
-              <div className="w-full h-1 bg-neu-sunken rounded-full shadow-neu-inset overflow-hidden">
+              <div className="forecast-slot-heading">
+                <p className="forecast-hour">{hora}</p>
+                <p className={`forecast-score ${texto}`}>{scoreFranja}</p>
+              </div>
+              <p className="forecast-clouds"><span>Nubes</span><strong>{nubosidad}%</strong></p>
+              <div className="forecast-track">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${barra}`}
                   style={{ width: `${scoreFranja}%` }}

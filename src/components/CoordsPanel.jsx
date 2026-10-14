@@ -1,53 +1,45 @@
 // src/components/CoordsPanel.jsx
 import { useAstroStore } from '../store/useAstroStore';
 import { explainBortleSource, getBortleForCoordinates } from '../utils/bortleModel';
+import {
+  classifyAstronomicalZone,
+  getSuitabilityColor,
+} from '../utils/astronomicalZoning';
 
 export const CoordsPanel = ({ altitud, bortleInfo }) => {
   const { coordinates } = useAstroStore();
   const activeBortleInfo = bortleInfo ?? getBortleForCoordinates(coordinates.lat, coordinates.lng);
+  const zoning = classifyAstronomicalZone(activeBortleInfo.bortle);
 
   return (
-    <div className="mx-3 mb-3">
-      <p className="text-[9px] tracking-[0.18em] uppercase text-astro-dim mb-3">
-        Coordenadas activas
-      </p>
+    <section className="coords-panel">
+      <div className="panel-section-title">
+        <span>Análisis territorial</span>
+        <span>EPSG:4326</span>
+      </div>
 
-      <div className="bg-neu-raised border border-neu-border rounded-xl shadow-neu-sm p-3">
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { key: 'LAT', val: coordinates.lat.toFixed(5) },
-            { key: 'LNG', val: coordinates.lng.toFixed(5) },
-            { key: 'ALT', val: `${altitud ?? '—'} m`      },
-            { key: 'UTC', val: new Date().toLocaleTimeString('es-BO', {
-                hour: '2-digit', minute: '2-digit', timeZone: 'America/La_Paz'
-              })
-            },
-          ].map(({ key, val }) => (
-            <div
-              key={key}
-              className="bg-neu-sunken rounded-lg p-2 shadow-neu-inset"
-            >
-              <p className="text-[8px] uppercase tracking-[0.14em] text-astro-dim mb-1">{key}</p>
-              <p className="text-[11px] text-astro-text font-medium tabular-nums">{val}</p>
-            </div>
-          ))}
-        </div>
+      <div className="coords-panel-body">
+        <div className="zoning-readout">
+          <dl className="territorial-summary">
+            <div><dt>Aptitud</dt><dd><span className="zoning-dot" style={{ backgroundColor: getSuitabilityColor(zoning.suitability) }} />{zoning.suitabilityLabel}</dd></div>
+            <div><dt>Zona</dt><dd>{zoning.zoneLabel}</dd></div>
+            <div><dt>Bortle</dt><dd>B{activeBortleInfo.bortle}</dd></div>
+          </dl>
 
-        <div className="mt-3 border-t border-neu-border pt-2">
-          <p className="text-[8px] uppercase tracking-[0.14em] text-astro-dim mb-1">
-            Contaminacion luminica
-          </p>
-          <p className="text-[10px] text-astro-text leading-snug">
-            Bortle {activeBortleInfo.bortle} - {activeBortleInfo.label}
-          </p>
-          <p className="mt-1 text-[8px] text-astro-muted leading-snug">
-            Dominante: {activeBortleInfo.sourceName ?? activeBortleInfo.dominantSource ?? 'sin fuente'}
-          </p>
-          <p className="mt-1 text-[8px] text-astro-dim leading-snug">
-            {explainBortleSource(activeBortleInfo)}
-          </p>
+          <dl className="coordinate-summary">
+            <div><dt>Latitud</dt><dd>{coordinates.lat.toFixed(5)}</dd></div>
+            <div><dt>Longitud</dt><dd>{coordinates.lng.toFixed(5)}</dd></div>
+            <div><dt>Altitud</dt><dd>{altitud ?? '—'} m</dd></div>
+          </dl>
+
+          <dl className="zoning-metadata">
+            <div><dt>Fuente dominante</dt><dd>{activeBortleInfo.sourceName ?? activeBortleInfo.dominantSource ?? 'Sin fuente'}</dd></div>
+            <div><dt>Confianza</dt><dd>{activeBortleInfo.confidence ?? 'No disponible'}</dd></div>
+          </dl>
+          <p className="zoning-method">{explainBortleSource(activeBortleInfo)}</p>
+          <p className="zoning-disclaimer">Zonificación modelada por influencia lumínica basada en la escala Bortle.</p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

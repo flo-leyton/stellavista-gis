@@ -2,9 +2,6 @@
 import { useEffect, useRef } from 'react';
 import * as Astronomy from 'astronomy-engine';
 import { useAstroStore } from '../store/useAstroStore';
-import { useState } from 'react';
-import { Planetario } from './Planetario';
-import { SolarSystemWindow } from './SolarSystemWindow';
 
 const PLANETAS = [
   { key: 'Jupiter', label: 'Júpiter' },
@@ -88,7 +85,7 @@ const LunaCanvas = ({ fraccion, fase }) => {
   );
 };
 
-export const AstroPanel = ({ faseLunar, lunaFase }) => {
+export const AstroPanel = ({ faseLunar, lunaFase, onClose }) => {
   const { coordinates } = useAstroStore();
   const ahora    = new Date();
   const observer = new Astronomy.Observer(coordinates.lat, coordinates.lng, 0);
@@ -132,11 +129,15 @@ export const AstroPanel = ({ faseLunar, lunaFase }) => {
     if (f < 0.78) return 'Cuarto menguante';
     return 'Menguante final';
   })();
-  const [planetarioAbierto, setPlanetarioAbierto] = useState(false);
-  const [sistemaSolarAbierto, setSistemaSolarAbierto] = useState(false);
-  
   return (
-    <aside className="w-56 bg-neu-base border-l border-neu-border flex flex-col shrink-0 overflow-y-auto">
+    <section className="astro-panel">
+      <div className="astro-panel-header">
+        <div>
+          <span>Efemérides locales</span>
+          <strong>Panel astronómico</strong>
+        </div>
+        <button onClick={onClose} aria-label="Cerrar panel astronómico">×</button>
+      </div>
 
       {/* Luna */}
       <div className="mx-3 mt-3 mb-2">
@@ -216,27 +217,6 @@ export const AstroPanel = ({ faseLunar, lunaFase }) => {
           })}
         </div>
       </div>
-              <div className="mx-3 mb-3 mt-auto">
-      <button
-        onClick={() => setPlanetarioAbierto(true)}
-        className="w-full py-2.5 rounded-xl bg-neu-raised border border-neu-border shadow-neu-sm text-[9px] tracking-[0.15em] uppercase text-astro-sky hover:text-astro-sky/80 transition-colors"
-      >
-        Abrir planetario
-      </button>
-      <button
-        onClick={() => setSistemaSolarAbierto(true)}
-        className="w-full mt-2 py-2.5 rounded-xl bg-neu-raised border border-neu-border shadow-neu-sm text-[9px] tracking-[0.15em] uppercase text-astro-horizon hover:text-astro-horizon/80 transition-colors"
-      >
-        Abrir sistema solar
-      </button>
-    </div>
-
-    {planetarioAbierto && (
-      <Planetario onCerrar={() => setPlanetarioAbierto(false)} />
-    )}
-    {sistemaSolarAbierto && (
-      <SolarSystemWindow onCerrar={() => setSistemaSolarAbierto(false)} />
-    )}
-    </aside>
+    </section>
   );
 };

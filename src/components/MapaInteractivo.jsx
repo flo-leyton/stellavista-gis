@@ -1,9 +1,10 @@
 // src/components/MapaInteractivo.jsx
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { getAllBortleZonesGeoJSON } from '../data/boliviaBortleZones';
 import { useAstroStore } from '../store/useAstroStore';
+import { addAstronomicalZoningToGeoJSON } from '../utils/astronomicalZoning';
 
 const SITIOS_RECOMENDADOS = {
   type: 'FeatureCollection',
@@ -42,6 +43,7 @@ const SITIOS_RECOMENDADOS = {
 };
 
 const BORTLE_SOURCE_DATA = getAllBortleZonesGeoJSON();
+const ASTRONOMICAL_ZONING_DATA = addAstronomicalZoningToGeoJSON(BORTLE_SOURCE_DATA);
 
 const bortleFillColor = [
   'step',
@@ -97,6 +99,48 @@ const LAYER_BORTLE_LINE = {
   },
 };
 
+const LAYER_ZONING_FILL = {
+  id: 'zonificacion-aptitud-astronomica',
+  type: 'fill',
+  source: 'astronomical-zoning-source',
+  paint: {
+    'fill-color': [
+      'match',
+      ['get', 'suitability'],
+      'high', '#22c55e',
+      'medium', '#f59e0b',
+      'low', '#ef4444',
+      '#64748b',
+    ],
+    'fill-opacity': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      5, 0.28,
+      9, 0.22,
+      12, 0.16,
+    ],
+  },
+};
+
+const LAYER_ZONING_LINE = {
+  id: 'zonificacion-aptitud-astronomica-bordes',
+  type: 'line',
+  source: 'astronomical-zoning-source',
+  paint: {
+    'line-color': [
+      'match',
+      ['get', 'suitability'],
+      'high', '#4ade80',
+      'medium', '#fbbf24',
+      'low', '#f87171',
+      '#94a3b8',
+    ],
+    'line-opacity': 0.58,
+    'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.55, 11, 1.4],
+  },
+};
+
 const LAYER_SITIOS_CIRCULOS = {
   id: 'sitios-circulos',
   type: 'circle',
@@ -136,9 +180,20 @@ const LAYER_SITIOS_LABELS = {
 };
 
 export const MapaInteractivo = ({ onClic }) => {
-  const { coordinates, layers } = useAstroStore();
+  const { coordinates, layers, mapFocusRequest } = useAstroStore();
   const mapRef = useRef(null);
   const mapKey = 'ECRGZxLvLb4HTx76OnDg';
+
+  useEffect(() => {
+    if (!mapFocusRequest || !mapRef.current) return;
+
+    mapRef.current.flyTo({
+      center: [mapFocusRequest.lng, mapFocusRequest.lat],
+      zoom: mapFocusRequest.zoom,
+      duration: 1100,
+      essential: true,
+    });
+  }, [mapFocusRequest]);
 
   return (
     <Map
@@ -157,6 +212,17 @@ export const MapaInteractivo = ({ onClic }) => {
         <Source id="bortle-zones-source" type="geojson" data={BORTLE_SOURCE_DATA}>
           <Layer {...LAYER_BORTLE_FILL} />
           <Layer {...LAYER_BORTLE_LINE} />
+        </Source>
+      )}
+
+      {layers.zonificacionAptitud && (
+        <Source
+          id="astronomical-zoning-source"
+          type="geojson"
+          data={ASTRONOMICAL_ZONING_DATA}
+        >
+          <Layer {...LAYER_ZONING_FILL} />
+          <Layer {...LAYER_ZONING_LINE} />
         </Source>
       )}
 
